@@ -2,15 +2,16 @@
 
 import sys
 import os.path #file check
-import platform #detect os platform
-import re #sorting files
+# import platform #detect os platform
+# import re #sorting files
 import random #faal
-from pathlib import Path #home directory
+# from pathlib import Path #home directory
 from natsort import natsorted #sort numbers properly
 from PyQt5 import QtWidgets, QtCore, QtGui, QtPrintSupport #pyqt stuff
 from PyQt5 import QtMultimedia as M
 import zipfile
-import io
+# import io
+from ext.darkdetect import isDark #darkdetect 0.5.0 [ https://github.com/albertosottile/darkdetect ] 20210912
 #local imports
 from gui.guiMain import Ui_main
 
@@ -25,9 +26,16 @@ ver = '1.0.0'
 class mainUi(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         QtWidgets.QWidget.__init__(self, None)
+        self.themeFlg = False
         self.setAcceptDrops(True) #accept file drops
         self.ui = Ui_main()
         self.ui.setupUi(self)
+        ###############################################################################
+        ####### Theme startup #########################################################
+        ###############################################################################
+        if isDark():
+            self.themeFlg = False
+            self._theme()
         ###############################################################################
         ####### Variables #############################################################
         ###############################################################################
@@ -39,10 +47,7 @@ class mainUi(QtWidgets.QMainWindow):
         self.audiopath = os.path.dirname(os.path.realpath(sys.argv[0]))+'/audio/'
         self.data = zipfile.ZipFile(self.datapath, 'r')
         self.data.setpassword(b'z!WbsdCkm#')
-        self.ui.copyLbl.setOpenExternalLinks(True)
-        self.ui.copyLbl.setTextInteractionFlags(QtCore.Qt.LinksAccessibleByMouse)
-        self.ui.copyLbl.setText('<a style="text-decoration:none; color: inherit;" href="http://leomoon.com">© LeoMoon Studios</a>')
-        self.ui.playBtn.setStyleSheet('qproperty-icon: url(:/res/icons/play.svg);')
+        self.ui.copyLbl.setText('© LeoMoon Studios')
         #hotkeys
         self.hotSearch = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+F"), self)
         self.hotSearch.activated.connect(self._hSearch)
@@ -88,40 +93,40 @@ class mainUi(QtWidgets.QMainWindow):
         self.ui.listLst.setCurrentRow(0)
         self.ui.listLst.setFocus()
         #platform changes
-        if sys.platform.startswith('darwin'): #macos
-            #move +5x
-            #resize +11y
-            self.ui.vazirBtn.hide()
-            self.ui.nastalighBtn.hide()
-            self.ui.ghazalRdo.move(self.ui.ghazalRdo.pos().x()+2, self.ui.ghazalRdo.pos().y())
-            self.ui.ghasideRdo.move(self.ui.ghasideRdo.pos().x()+2, self.ui.ghasideRdo.pos().y())
-            self.ui.masnaviRdo.move(self.ui.masnaviRdo.pos().x()+2, self.ui.masnaviRdo.pos().y())
-            self.ui.gheteRdo.move(self.ui.gheteRdo.pos().x()+2, self.ui.gheteRdo.pos().y())
-            self.ui.robayiRdo.move(self.ui.robayiRdo.pos().x()+2, self.ui.robayiRdo.pos().y())
-            self.ui.searchRdo.move(self.ui.searchRdo.pos().x()+2, self.ui.searchRdo.pos().y())
-            self.ui.randomBtn.move(self.ui.randomBtn.pos().x()-6, self.ui.randomBtn.pos().y()-2)
-            self.ui.randomBtn.resize(self.ui.randomBtn.width()+12, self.ui.randomBtn.height()+6)
-            self.ui.titleLbl.setFont(QtGui.QFont("Vazir", 29, QtGui.QFont.Black))
-            self.ui.verLbl.setFont(QtGui.QFont('Vazir FD', 17))
-            self.ui.ghazalRdo.setFont(QtGui.QFont('Vazir FD', 17))
-            self.ui.ghasideRdo.setFont(QtGui.QFont('Vazir FD', 17))
-            self.ui.masnaviRdo.setFont(QtGui.QFont('Vazir FD', 17))
-            self.ui.gheteRdo.setFont(QtGui.QFont('Vazir FD', 17))
-            self.ui.robayiRdo.setFont(QtGui.QFont('Vazir FD', 17))
-            self.ui.searchRdo.setFont(QtGui.QFont('Vazir FD', 17))
-            self.ui.listLst.setFont(QtGui.QFont('Vazir FD', 17))
-            self.ui.textEdit.setFont(QtGui.QFont('Vazir FD', 18))
-            self.ui.copyLbl.setFont(QtGui.QFont('Vazir FD', 14))
-            #pyqt 5.14.1 fixes
-            self.ui.searchBtn.resize(self.ui.searchBtn.width()+11, self.ui.searchBtn.height()+6)
-            self.ui.plusBtn.resize(self.ui.plusBtn.width()+11, self.ui.plusBtn.height()+6)
-            self.ui.printBtn.resize(self.ui.printBtn.width()+11, self.ui.printBtn.height()+6)
-            self.ui.minusBtn.resize(self.ui.minusBtn.width()+11, self.ui.minusBtn.height()+6)
-            self.ui.searchBtn.move(self.ui.searchBtn.pos().x()-6, self.ui.searchBtn.pos().y()-2)
-            self.ui.plusBtn.move(self.ui.plusBtn.pos().x()-6, self.ui.vazirBtn.pos().y()-2)
-            self.ui.printBtn.move(self.ui.printBtn.pos().x()-6, self.ui.vazirBtn.pos().y()-2)
-            self.ui.minusBtn.move(self.ui.minusBtn.pos().x()-6, self.ui.vazirBtn.pos().y()-2)
-            self.ui.playBtn.setFlat(True)
+        # if sys.platform.startswith('darwin'): #macos
+        #     #move +5x
+        #     #resize +11y
+        #     self.ui.vazirBtn.hide()
+        #     self.ui.nastalighBtn.hide()
+        #     self.ui.ghazalRdo.move(self.ui.ghazalRdo.pos().x()+2, self.ui.ghazalRdo.pos().y())
+        #     self.ui.ghasideRdo.move(self.ui.ghasideRdo.pos().x()+2, self.ui.ghasideRdo.pos().y())
+        #     self.ui.masnaviRdo.move(self.ui.masnaviRdo.pos().x()+2, self.ui.masnaviRdo.pos().y())
+        #     self.ui.gheteRdo.move(self.ui.gheteRdo.pos().x()+2, self.ui.gheteRdo.pos().y())
+        #     self.ui.robayiRdo.move(self.ui.robayiRdo.pos().x()+2, self.ui.robayiRdo.pos().y())
+        #     self.ui.searchRdo.move(self.ui.searchRdo.pos().x()+2, self.ui.searchRdo.pos().y())
+        #     self.ui.randomBtn.move(self.ui.randomBtn.pos().x()-6, self.ui.randomBtn.pos().y()-2)
+        #     self.ui.randomBtn.resize(self.ui.randomBtn.width()+12, self.ui.randomBtn.height()+6)
+        #     self.ui.titleLbl.setFont(QtGui.QFont("Vazir", 29, QtGui.QFont.Black))
+        #     self.ui.verLbl.setFont(QtGui.QFont('Vazir FD', 17))
+        #     self.ui.ghazalRdo.setFont(QtGui.QFont('Vazir FD', 17))
+        #     self.ui.ghasideRdo.setFont(QtGui.QFont('Vazir FD', 17))
+        #     self.ui.masnaviRdo.setFont(QtGui.QFont('Vazir FD', 17))
+        #     self.ui.gheteRdo.setFont(QtGui.QFont('Vazir FD', 17))
+        #     self.ui.robayiRdo.setFont(QtGui.QFont('Vazir FD', 17))
+        #     self.ui.searchRdo.setFont(QtGui.QFont('Vazir FD', 17))
+        #     self.ui.listLst.setFont(QtGui.QFont('Vazir FD', 17))
+        #     self.ui.textEdit.setFont(QtGui.QFont('Vazir FD', 18))
+        #     self.ui.copyLbl.setFont(QtGui.QFont('Vazir FD', 14))
+        #     #pyqt 5.14.1 fixes
+        #     self.ui.searchBtn.resize(self.ui.searchBtn.width()+11, self.ui.searchBtn.height()+6)
+        #     self.ui.plusBtn.resize(self.ui.plusBtn.width()+11, self.ui.plusBtn.height()+6)
+        #     self.ui.printBtn.resize(self.ui.printBtn.width()+11, self.ui.printBtn.height()+6)
+        #     self.ui.minusBtn.resize(self.ui.minusBtn.width()+11, self.ui.minusBtn.height()+6)
+        #     self.ui.searchBtn.move(self.ui.searchBtn.pos().x()-6, self.ui.searchBtn.pos().y()-2)
+        #     self.ui.plusBtn.move(self.ui.plusBtn.pos().x()-6, self.ui.vazirBtn.pos().y()-2)
+        #     self.ui.printBtn.move(self.ui.printBtn.pos().x()-6, self.ui.vazirBtn.pos().y()-2)
+        #     self.ui.minusBtn.move(self.ui.minusBtn.pos().x()-6, self.ui.vazirBtn.pos().y()-2)
+        #     self.ui.playBtn.setFlat(True)
             #pyqt 5.10.1 fixes
             #self.ui.plusBtn.resize(self.ui.plusBtn.width()+2, self.ui.plusBtn.height()+3)
             #self.ui.printBtn.resize(self.ui.printBtn.width()+2, self.ui.printBtn.height()+3)
@@ -133,8 +138,82 @@ class mainUi(QtWidgets.QMainWindow):
     ###############################################################################
     ####### Functions #############################################################
     ###############################################################################
+    def svgColorChange(self, svg_filepath, color='red'):
+        img = QtGui.QPixmap(svg_filepath)
+        qp = QtGui.QPainter(img)
+        qp.setCompositionMode(QtGui.QPainter.CompositionMode_SourceIn)
+        qp.fillRect( img.rect(), QtGui.QColor(color) )
+        qp.end()
+        return QtGui.QIcon(img)
+
+    def _theme(self):
+        if not self.themeFlg:
+            self.ui.searchBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/search.svg', 'lightGray')))
+            self.ui.plusBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/plus.svg', 'lightGray')))
+            self.ui.printBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/print.svg', 'lightGray')))
+            self.ui.minusBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/minus.svg', 'lightGray')))
+            self.ui.playBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/play.svg', 'lightGray')))
+            dark_theme = QtGui.QPalette()
+            dark_theme.setColor(QtGui.QPalette.Window, QtGui.QColor(55,53,53))
+            dark_theme.setColor(QtGui.QPalette.WindowText, QtGui.QColor(227,227,227))
+            dark_theme.setColor(QtGui.QPalette.Base, QtGui.QColor(30,30,30))
+            dark_theme.setColor(QtGui.QPalette.AlternateBase, QtGui.QColor(55,55,55))
+            dark_theme.setColor(QtGui.QPalette.ToolTipBase, QtGui.QColor(50,50,50))
+            dark_theme.setColor(QtGui.QPalette.ToolTipText, QtGui.QColor(227,227,227))
+            dark_theme.setColor(QtGui.QPalette.Text, QtGui.QColor(227,227,227))
+            dark_theme.setColor(QtGui.QPalette.Link, QtGui.QColor(227,227,227))
+            dark_theme.setColor(QtGui.QPalette.Button, QtGui.QColor(50,50,50))
+            dark_theme.setColor(QtGui.QPalette.ButtonText, QtGui.QColor(227,227,227))
+            dark_theme.setColor(QtGui.QPalette.BrightText, QtGui.QColor(227,227,227))
+            dark_theme.setColor(QtGui.QPalette.Active, QtGui.QPalette.Button, QtGui.QColor(53, 53, 53))
+            dark_theme.setColor(QtGui.QPalette.Inactive, QtGui.QPalette.Button, QtGui.QColor(53, 53, 53))
+            dark_theme.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.ButtonText, QtCore.Qt.darkGray)
+            dark_theme.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.WindowText, QtCore.Qt.darkGray)
+            dark_theme.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.Text, QtCore.Qt.darkGray)
+            dark_theme.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.Light, QtGui.QColor(53, 53, 53))
+            QtGui.QGuiApplication.setPalette(dark_theme)
+            self.setStyleSheet("""
+                                    QFrame#banner {background-color: qlineargradient(x1:0 y1:0, x2:0 y2:1, stop:0 #5e5b5b, stop:1 #373535); border-radius: 0px;}
+                                    QLabel#titleLbl {color: rgb(227,227,227);}
+                                    QLabel#verLbl {color: rgb(227,227,227);}
+                                        """)
+            # self.ui.actionDarkMode.setChecked(True)
+        else:
+            self.ui.searchBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/search.svg', 'black')))
+            self.ui.plusBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/plus.svg', 'black')))
+            self.ui.printBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/print.svg', 'black')))
+            self.ui.minusBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/minus.svg', 'black')))
+            self.ui.playBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/play.svg', 'black')))
+            light_theme = QtGui.QPalette()
+            light_theme.setColor(QtGui.QPalette.Window, QtGui.QColor(240,240,240))
+            light_theme.setColor(QtGui.QPalette.WindowText, QtGui.QColor(68,68,68))
+            light_theme.setColor(QtGui.QPalette.Base, QtGui.QColor(255,255,255))
+            light_theme.setColor(QtGui.QPalette.AlternateBase, QtGui.QColor(255,255,255))
+            light_theme.setColor(QtGui.QPalette.ToolTipBase, QtGui.QColor(240,240,240))
+            light_theme.setColor(QtGui.QPalette.ToolTipText, QtGui.QColor(68,68,68))
+            light_theme.setColor(QtGui.QPalette.Text, QtGui.QColor(68,68,68))
+            light_theme.setColor(QtGui.QPalette.Link, QtGui.QColor(68,68,68))
+            light_theme.setColor(QtGui.QPalette.Button, QtGui.QColor(240,240,240))
+            light_theme.setColor(QtGui.QPalette.ButtonText, QtGui.QColor(68,68,68))
+            light_theme.setColor(QtGui.QPalette.BrightText, QtGui.QColor(68,68,68))
+            light_theme.setColor(QtGui.QPalette.Active, QtGui.QPalette.Button, QtGui.QColor(240,240,240))
+            light_theme.setColor(QtGui.QPalette.Inactive, QtGui.QPalette.Button, QtGui.QColor(240,240,240))
+            light_theme.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.ButtonText, QtGui.QColor(128,128,128))
+            light_theme.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.WindowText, QtGui.QColor(128,128,128))
+            light_theme.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.Text, QtGui.QColor(128,128,128))
+            light_theme.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.Light, QtGui.QColor(243,243,243))
+            QtGui.QGuiApplication.setPalette(light_theme)
+            self.setStyleSheet("""
+                                    QFrame#banner {background-color: qlineargradient(x1:0 y1:0, x2:0 y2:1, stop:0 #c9c9c9, stop:1 #F0F0F0); border-radius: 0px;}
+                                    QLabel#titleLbl {color: rgb(68,68,68);}
+                                    QLabel#verLbl {color: rgb(68,68,68);}
+                                        """)
+            # self.ui.actionDarkMode.setChecked(False)
+        self.themeFlg = not self.themeFlg
+
     def _preview(self):
         preview = QtPrintSupport.QPrintPreviewDialog()
+        preview.setWindowIcon(QtGui.QIcon(':/res/icons/main.svg'))
         preview.paintRequested.connect(lambda p: self.ui.textEdit.print_(p))
         preview.exec_()
 
@@ -160,6 +239,7 @@ class mainUi(QtWidgets.QMainWindow):
             alist = natsorted([f for f in self.data.namelist() if f.startswith(self.pre)][0:])
             self.ui.searchInp.setDisabled(True)
             self.ui.searchBtn.setDisabled(True)
+            self.ui.searchBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/search.svg', 'blue')))
             self.ui.listLst.addItems(alist)
             self.ui.listLst.setCurrentRow(0)
             self.ui.listLst.setFocus()
@@ -171,6 +251,10 @@ class mainUi(QtWidgets.QMainWindow):
         self.ui.textEdit.clear()
         self.ui.searchInp.setDisabled(False)
         self.ui.searchBtn.setDisabled(False)
+        if self.themeFlg:
+            self.ui.searchBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/search.svg', 'lightGray')))
+        else:
+            self.ui.searchBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/search.svg', 'black')))
         self.ui.searchInp.setFocus()
 
     def _hSearch(self):
@@ -228,7 +312,10 @@ class mainUi(QtWidgets.QMainWindow):
             self.audio = QtCore.QUrl.fromLocalFile(self.audiopath+self.ui.listLst.currentItem().text()+'.wav')
             self.content = M.QMediaContent(self.audio)
             self.player.setMedia(self.content)
-            self.ui.playBtn.setStyleSheet('qproperty-icon: url(:/res/icons/play.svg);')
+            if self.themeFlg:
+                self.ui.playBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/play.svg', 'lightGray')))
+            else:
+                self.ui.playBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/play.svg', 'black')))
             self.play = False
             self.player.stop()
             self.ui.slider.setValue(0)
@@ -247,11 +334,17 @@ class mainUi(QtWidgets.QMainWindow):
     def _play(self):
         if self.play:
             self.player.pause()
-            self.ui.playBtn.setStyleSheet('qproperty-icon: url(:/res/icons/play.svg);')
+            if self.themeFlg:
+                self.ui.playBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/play.svg', 'lightGray')))
+            else:
+                self.ui.playBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/play.svg', 'black')))
             self.play = False
         else:
             self.player.play()
-            self.ui.playBtn.setStyleSheet('qproperty-icon: url(:/res/icons/pause.svg);')
+            if self.themeFlg:
+                self.ui.playBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/pause.svg', 'lightGray')))
+            else:
+                self.ui.playBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/pause.svg', 'black')))
             self.play = True
         self.ui.listLst.setFocus()
 
@@ -277,7 +370,10 @@ class mainUi(QtWidgets.QMainWindow):
         if self.player.duration() == self.ui.slider.value():
             self.play = False
             self.player.stop()
-            self.ui.playBtn.setStyleSheet('qproperty-icon: url(:/res/icons/play.svg);')
+            if self.themeFlg:
+                self.ui.playBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/pause.svg', 'lightGray')))
+            else:
+                self.ui.playBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/pause.svg', 'black')))
             self.ui.slider.setValue(0)
             # self._next()
 
@@ -289,6 +385,7 @@ class mainUi(QtWidgets.QMainWindow):
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
+    app.setStyle('Fusion')
     QtGui.QFontDatabase.addApplicationFont(':/res/fonts/IranNastaliq-Web.ttf') #add custom font no install
     QtGui.QFontDatabase.addApplicationFont(':/res/fonts/Vazir-Black.ttf') #add custom font no install
     QtGui.QFontDatabase.addApplicationFont(':/res/fonts/Vazir-FD.ttf') #add custom font no install

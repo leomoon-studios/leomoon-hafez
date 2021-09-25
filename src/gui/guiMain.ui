@@ -27,7 +27,9 @@
    <enum>Qt::RightToLeft</enum>
   </property>
   <property name="styleSheet">
-   <string notr="true">QFrame#banner {background: qlineargradient( x1:0 y1:0, x2:0 y2:1, stop:0 #d0a272, stop:1 #ae8760); border-radius: 0px;}</string>
+   <string notr="true">QFrame#banner {background-color: qlineargradient(x1:0 y1:0, x2:0 y2:1, stop:0 #c9c9c9, stop:1 #F0F0F0); border-radius: 0px;}
+QLabel#titleLbl {color: rgb(68,68,68);}
+QLabel#verLbl {color: rgb(68,68,68);}</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_3">
