@@ -7,13 +7,13 @@
     <x>0</x>
     <y>0</y>
     <width>850</width>
-    <height>660</height>
+    <height>711</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>850</width>
-    <height>660</height>
+    <height>711</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -253,13 +253,13 @@ QLabel#verLbl {color: rgb(68,68,68);}</string>
           <property name="minimumSize">
            <size>
             <width>141</width>
-            <height>490</height>
+            <height>531</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
             <width>141</width>
-            <height>490</height>
+            <height>531</height>
            </size>
           </property>
           <property name="frameShape">
@@ -411,7 +411,7 @@ QLabel#verLbl {color: rgb(68,68,68);}</string>
            <property name="geometry">
             <rect>
              <x>100</x>
-             <y>440</y>
+             <y>490</y>
              <width>41</width>
              <height>41</height>
             </rect>
@@ -440,7 +440,7 @@ QLabel#verLbl {color: rgb(68,68,68);}</string>
            <property name="geometry">
             <rect>
              <x>0</x>
-             <y>440</y>
+             <y>490</y>
              <width>41</width>
              <height>41</height>
             </rect>
@@ -539,7 +539,7 @@ QLabel#verLbl {color: rgb(68,68,68);}</string>
            <property name="geometry">
             <rect>
              <x>50</x>
-             <y>440</y>
+             <y>490</y>
              <width>41</width>
              <height>41</height>
             </rect>
@@ -594,6 +594,25 @@ QLabel#verLbl {color: rgb(68,68,68);}</string>
            </property>
            <property name="text">
             <string>فال حافظ</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="themeBtn">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>440</y>
+             <width>141</width>
+             <height>41</height>
+            </rect>
+           </property>
+           <property name="font">
+            <font>
+             <family>Vazir FD</family>
+             <pointsize>14</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>تغییر پوسته</string>
            </property>
           </widget>
          </widget>
