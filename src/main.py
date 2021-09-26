@@ -342,15 +342,15 @@ class mainUi(QtWidgets.QMainWindow):
             self.audio = QtCore.QUrl.fromLocalFile(self.audiopath+self.ui.listLst.currentItem().text()+'.wav')
             self.content = M.QMediaContent(self.audio)
             self.player.setMedia(self.content)
-            if self.themeFlg:
-                self.ui.playBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/play.svg', 'lightGray')))
-            else:
-                self.ui.playBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/play.svg', 'black')))
             self.play = False
             self.player.stop()
             self.ui.slider.setValue(0)
             self.player.positionChanged.connect(self.positionChanged)
             self.player.durationChanged.connect(self.durationChanged)
+            if self.themeFlg:
+                self.ui.playBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/play.svg', 'lightGray')))
+            else:
+                self.ui.playBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/play.svg', 'black')))
         else:
             self.ui.playBtn.hide()
             self.ui.slider.hide()
