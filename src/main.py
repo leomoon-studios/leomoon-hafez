@@ -105,10 +105,15 @@ class mainUi(QtWidgets.QMainWindow):
             self.ui.listLst.setFont(QtGui.QFont('Vazir FD', 17))
             self.ui.textEdit.setFont(QtGui.QFont('Vazir FD', 18))
             self.ui.copyLbl.setFont(QtGui.QFont('Vazir FD', 14))
+            #hide vazir and nastaligh buttons and move remaing buttons to their pos()
+            self.ui.vazirBtn.hide()
+            self.ui.nastalighBtn.hide()
+            self.ui.themeBtn.move(self.ui.themeBtn.pos().x(), self.ui.vazirBtn.pos().y())
+            self.ui.plusBtn.move(self.ui.plusBtn.pos().x(), self.ui.nastalighBtn.pos().y())
+            self.ui.printBtn.move(self.ui.printBtn.pos().x(), self.ui.nastalighBtn.pos().y())
+            self.ui.minusBtn.move(self.ui.minusBtn.pos().x(), self.ui.nastalighBtn.pos().y())
         #     #move +5x
         #     #resize +11y
-        #     self.ui.vazirBtn.hide()
-        #     self.ui.nastalighBtn.hide()
         #     self.ui.ghazalRdo.move(self.ui.ghazalRdo.pos().x()+2, self.ui.ghazalRdo.pos().y())
         #     self.ui.ghasideRdo.move(self.ui.ghasideRdo.pos().x()+2, self.ui.ghasideRdo.pos().y())
         #     self.ui.masnaviRdo.move(self.ui.masnaviRdo.pos().x()+2, self.ui.masnaviRdo.pos().y())
