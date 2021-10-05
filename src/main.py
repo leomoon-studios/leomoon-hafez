@@ -15,7 +15,7 @@ from ext.darkdetect import isDark #darkdetect 0.5.0 [ https://github.com/alberto
 #local imports
 from gui.guiMain import Ui_main
 
-#version: 1.1.4
+#version: 1.1.5
 
 QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True) #enable highdpi scaling
 QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True) #use highdpi icons
