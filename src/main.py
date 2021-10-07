@@ -60,12 +60,6 @@ class mainUi(QtWidgets.QMainWindow):
         self.hotSwitch = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+M"), self)
         self.hotSwitch.activated.connect(self._theme)
         #ui functions
-        if isDark():
-            self.themeFlg = False
-            self._theme()
-        else:
-            self.themeFlg = True
-            self._theme()
         self.ui.ghazalRdo.toggled.connect(self._path)
         self.ui.ghasideRdo.toggled.connect(self._path)
         self.ui.masnaviRdo.toggled.connect(self._path)
@@ -135,13 +129,19 @@ class mainUi(QtWidgets.QMainWindow):
         #     self.ui.printBtn.move(self.ui.printBtn.pos().x()-6, self.ui.vazirBtn.pos().y()-2)
         #     self.ui.minusBtn.move(self.ui.minusBtn.pos().x()-6, self.ui.vazirBtn.pos().y()-2)
         #     self.ui.playBtn.setFlat(True)
-            #pyqt 5.10.1 fixes
-            #self.ui.plusBtn.resize(self.ui.plusBtn.width()+2, self.ui.plusBtn.height()+3)
-            #self.ui.printBtn.resize(self.ui.printBtn.width()+2, self.ui.printBtn.height()+3)
-            #self.ui.minusBtn.resize(self.ui.minusBtn.width()+2, self.ui.minusBtn.height()+3)
-            #self.ui.plusBtn.move(self.ui.plusBtn.pos().x()-2, self.ui.vazirBtn.pos().y())
-            #self.ui.printBtn.move(self.ui.printBtn.pos().x()-1, self.ui.vazirBtn.pos().y())
-            #self.ui.minusBtn.move(self.ui.minusBtn.pos().x(), self.ui.vazirBtn.pos().y())
+        #     pyqt 5.10.1 fixes
+        #     self.ui.plusBtn.resize(self.ui.plusBtn.width()+2, self.ui.plusBtn.height()+3)
+        #     self.ui.printBtn.resize(self.ui.printBtn.width()+2, self.ui.printBtn.height()+3)
+        #     self.ui.minusBtn.resize(self.ui.minusBtn.width()+2, self.ui.minusBtn.height()+3)
+        #     self.ui.plusBtn.move(self.ui.plusBtn.pos().x()-2, self.ui.vazirBtn.pos().y())
+        #     self.ui.printBtn.move(self.ui.printBtn.pos().x()-1, self.ui.vazirBtn.pos().y())
+        #     self.ui.minusBtn.move(self.ui.minusBtn.pos().x(), self.ui.vazirBtn.pos().y())
+        if isDark():
+            self.themeFlg = False
+            self._theme()
+        else:
+            self.themeFlg = True
+            self._theme()
 
     ###############################################################################
     ####### Functions #############################################################
