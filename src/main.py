@@ -63,6 +63,9 @@ class mainUi(QtWidgets.QMainWindow):
         if isDark():
             self.themeFlg = False
             self._theme()
+        else:
+            self.themeFlg = True
+            self._theme()
         self.ui.ghazalRdo.toggled.connect(self._path)
         self.ui.ghasideRdo.toggled.connect(self._path)
         self.ui.masnaviRdo.toggled.connect(self._path)
