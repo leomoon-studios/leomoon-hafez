@@ -11,11 +11,11 @@ from PyQt5 import QtWidgets, QtCore, QtGui, QtPrintSupport #pyqt stuff
 from PyQt5 import QtMultimedia as M
 import zipfile
 # import io
-from ext.darkdetect import isDark #darkdetect 0.5.0 [ https://github.com/albertosottile/darkdetect ] 20210912
+from ext.darkdetect import isDark #darkdetect 0.7.1 [ https://github.com/albertosottile/darkdetect ] 20220718
 #local imports
 from gui.guiMain import Ui_main
 
-#version: 1.1.5
+#version: 1.1.6
 
 QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True) #enable highdpi scaling
 QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True) #use highdpi icons
