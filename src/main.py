@@ -2,12 +2,10 @@
 
 import os #file check
 import sys
-#load dlls used by cairo
+#load dlls
 dllpath = os.path.dirname(os.path.realpath(sys.argv[0]))
 os.environ["PATH"] += os.pathsep + dllpath
 os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = dllpath
-# import platform #detect os platform
-# import re #sorting files
 import random #faal
 from natsort import natsorted #sort numbers properly
 from PyQt5 import QtWidgets, QtCore, QtGui, QtPrintSupport #pyqt stuff
