@@ -1,0 +1,96 @@
+name: Windows
+
+on:
+  workflow_call:
+    inputs:
+      version: { required: true, type: string }
+      release_date: { required: true, type: string }
+      commit: { required: true, type: string }
+      arch: { required: false, default: all, type: string }
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build and test (${{ matrix.release_arch }})
+    runs-on: ${{ matrix.release_arch == 'arm64' && 'windows-11-vs2026-arm' || 'windows-2022' }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        release_arch: ${{ fromJSON(inputs.arch == 'x64' && '["x64"]' || inputs.arch == 'arm64' && '["arm64"]' || '["x64","arm64"]') }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with: { python-version: "3.12" }
+
+      - name: Create locked project environment
+        shell: bash
+        run: |
+          python -m venv .venv
+          .venv/Scripts/python.exe -m pip install "uv==0.13.5"
+          .venv/Scripts/uv.exe sync --all-extras --locked
+
+      - name: Configure MSVC dependency tools
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $component = "${{ matrix.release_arch == 'arm64' && 'Microsoft.VisualStudio.Component.VC.Tools.ARM64' || 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64' }}"
+          $installationPath = (& $vswhere -latest -products * -requires $component -property installationPath).Trim()
+          if ([string]::IsNullOrWhiteSpace($installationPath)) { throw "Visual Studio C++ tools were not found" }
+          $devCommand = Join-Path $installationPath "Common7\Tools\VsDevCmd.bat"
+          & cmd.exe /s /c "`\"$devCommand`\" -no_logo -arch=${{ matrix.release_arch }} -host_arch=${{ matrix.release_arch }} && set" |
+            ForEach-Object {
+              $separator = $_.IndexOf("=")
+              if ($separator -gt 0) {
+                $name = $_.Substring(0, $separator)
+                $value = $_.Substring($separator + 1)
+                if ($name -notmatch '^(GITHUB_|RUNNER_|ACTIONS_)') {
+                  "$name=$value" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+                }
+              }
+            }
+
+      - name: Regenerate Qt and test
+        shell: bash
+        run: |
+          .venv/Scripts/python.exe scripts/generate_qt.py
+          git diff --exit-code -- src/leomoon_hafez/_generated
+          .venv/Scripts/python.exe -m ruff check src tests scripts
+          QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORMTHEME='' QT_STYLE_OVERRIDE=Fusion .venv/Scripts/python.exe -m pytest -q -rs
+          .venv/Scripts/python.exe -m pip check
+
+      - name: Build one-directory application
+        shell: bash
+        run: .venv/Scripts/python.exe scripts/build.py --version "${{ inputs.version }}" --release-date "${{ inputs.release_date }}" --commit "${{ inputs.commit }}" --output-dir "build/windows-${{ matrix.release_arch }}" --clean
+
+      - name: Verify manifest and smoke-test bundle
+        shell: bash
+        run: |
+          .venv/Scripts/python.exe scripts/verify_bundle.py "build/windows-${{ matrix.release_arch }}/release-manifest.json" "${{ inputs.version }}" "${{ matrix.release_arch }}"
+          QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORMTHEME='' QT_STYLE_OVERRIDE=Fusion .venv/Scripts/python.exe scripts/smoke_bundle.py "build/windows-${{ matrix.release_arch }}/leomoon-hafez/LeoMoon Hafez.exe"
+
+      - name: Retain raw bundle diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: leomoon-hafez-windows-${{ matrix.release_arch }}-failure-${{ github.sha }}
+          path: build/windows-${{ matrix.release_arch }}/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload Windows bundle diagnostics
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: leomoon-hafez-windows-${{ matrix.release_arch }}-build-${{ github.sha }}
+          path: build/windows-${{ matrix.release_arch }}/
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,89 @@
+name: Manual platform builds
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to use for test artifacts
+        required: true
+        default: "2.1.0"
+        type: string
+      target:
+        description: Platform to build and test
+        required: true
+        default: all
+        type: choice
+        options: [all, linux, windows, macos]
+      arch:
+        description: Architecture for Linux and Windows; macOS is always ARM64
+        required: true
+        default: all
+        type: choice
+        options: [all, x64, arm64]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: manual-platform-build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Prepare manual build metadata
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+      release_date: ${{ steps.metadata.outputs.release_date }}
+      commit: ${{ steps.metadata.outputs.commit }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+
+      - name: Generate build metadata
+        id: metadata
+        shell: bash
+        run: |
+          release_date="$(date --utc +'%Y-%m-%dT%H:%M:%SZ')"
+          python scripts/prepare_release_metadata.py --tag "v${{ inputs.version }}" --release-date "$release_date" --commit-sha "$GITHUB_SHA" --allow-unverified-tag --output release-metadata.json
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          metadata = json.load(open("release-metadata.json", encoding="utf-8"))
+          print(f"version={metadata['version']}")
+          print(f"release_date={metadata['release_date']}")
+          print(f"commit={metadata['commit_sha']}")
+          PY
+
+  linux:
+    name: Linux
+    if: inputs.target == 'all' || inputs.target == 'linux'
+    needs: validate
+    uses: ./.github/workflows/linux.yml
+    with:
+      version: ${{ needs.validate.outputs.version }}
+      release_date: ${{ needs.validate.outputs.release_date }}
+      commit: ${{ needs.validate.outputs.commit }}
+      arch: ${{ inputs.arch }}
+
+  windows:
+    name: Windows
+    if: inputs.target == 'all' || inputs.target == 'windows'
+    needs: validate
+    uses: ./.github/workflows/windows.yml
+    with:
+      version: ${{ needs.validate.outputs.version }}
+      release_date: ${{ needs.validate.outputs.release_date }}
+      commit: ${{ needs.validate.outputs.commit }}
+      arch: ${{ inputs.arch }}
+
+  macos:
+    name: macOS
+    if: inputs.target == 'all' || inputs.target == 'macos'
+    needs: validate
+    uses: ./.github/workflows/macos.yml
+    with:
+      version: ${{ needs.validate.outputs.version }}
+      release_date: ${{ needs.validate.outputs.release_date }}
+      commit: ${{ needs.validate.outputs.commit }}
