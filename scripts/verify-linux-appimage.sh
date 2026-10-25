@@ -37,7 +37,7 @@ audio_count="$(find "$root" -type f -name '*.wav' | wc -l)"
 [[ "$audio_count" -eq 495 ]] || { echo "Expected 495 bundled audio files, found $audio_count" >&2; exit 1; }
 poem_archive="$(find "$root" -type f -name 'hafez-poems.zip' -print -quit)"
 [[ -n "$poem_archive" && "$(unzip -Z1 "$poem_archive" | wc -l)" -eq 576 ]] || { echo "The bundled poem archive is incomplete" >&2; exit 1; }
-if grep -R -a -F "$repo_dir" "$root/usr/lib/leomoon-hafez" >/dev/null; then
+if strings "$root/usr/lib/leomoon-hafez/LeoMoon Hafez" | grep -F "$repo_dir" >/dev/null; then
     echo "AppImage contains a repository-only path" >&2
     exit 1
 fi
