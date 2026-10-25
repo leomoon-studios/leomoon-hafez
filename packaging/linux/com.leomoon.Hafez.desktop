@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=LeoMoon Hafez
+Comment=Read Hafez poetry with audio recitations
+Exec=leomoon-hafez
+Icon=com.leomoon.Hafez
+Categories=Education;Utility;
+Terminal=false
+StartupNotify=true
