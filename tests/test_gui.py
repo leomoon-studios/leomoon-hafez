@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PyQt5 import QtGui
+from PySide6 import QtGui
 
 import main
 from hafez_audio import AudioLibrary
@@ -32,7 +32,7 @@ class _PreviewDialog:
     def setWindowIcon(self, icon) -> None:
         self.icon = icon
 
-    def exec_(self) -> None:
+    def exec(self) -> None:
         self.executed = True
 
 
@@ -51,6 +51,7 @@ def test_main_window_starts_and_exercises_primary_controls(qtbot, monkeypatch) -
     assert window.ui.listLst.count() == 495
     assert window.ui.playBtn.isVisible()
     assert window.ui.slider.isVisible()
+    assert window.player.audioOutput() is window.audio_output
 
     previous_theme = window.themeFlg
     window._theme()
@@ -77,6 +78,9 @@ def test_main_window_starts_and_exercises_primary_controls(qtbot, monkeypatch) -
     assert window.playback.playing
     window._play()
     assert not window.playback.playing
+    window._media_error(None, "fixture error")
+    assert not window.playback.playing
+    assert window.ui.slider.value() == 0
 
     monkeypatch.setattr(main.QtPrintSupport, "QPrintPreviewDialog", _PreviewDialog)
     window._preview()

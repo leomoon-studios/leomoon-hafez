@@ -6,8 +6,8 @@ import sys
 dllpath = os.path.dirname(os.path.realpath(sys.argv[0]))
 os.environ["PATH"] += os.pathsep + dllpath
 os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = dllpath
-from PyQt5 import QtWidgets, QtCore, QtGui, QtPrintSupport #pyqt stuff
-from PyQt5 import QtMultimedia as M
+from PySide6 import QtWidgets, QtCore, QtGui, QtPrintSupport
+from PySide6 import QtMultimedia as M
 # import io
 from ext.darkdetect import isDark #darkdetect 0.7.1 [ https://github.com/albertosottile/darkdetect ] 20220718
 #local imports
@@ -17,15 +17,12 @@ from hafez_corpus import CorpusError, PoemArchive
 
 #version: 1.1.6
 
-QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True) #enable highdpi scaling
-QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True) #use highdpi icons
-
 title = 'دیوان حافظ'
 ver = '1.0.0'
 
 class mainUi(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
-        QtWidgets.QWidget.__init__(self, None)
+        super().__init__(parent)
         self.themeFlg = False
         self.setAcceptDrops(True) #accept file drops
         self.ui = Ui_main()
@@ -42,26 +39,29 @@ class mainUi(QtWidgets.QMainWindow):
         self.corpus = PoemArchive(self.datapath)
         self.audio_library = AudioLibrary(self.audiopath)
         self.playback = PlaybackState()
-        self.player = M.QMediaPlayer()
+        self.audio_output = M.QAudioOutput(self)
+        self.player = M.QMediaPlayer(self)
+        self.player.setAudioOutput(self.audio_output)
         self.player.positionChanged.connect(self.positionChanged)
         self.player.durationChanged.connect(self.durationChanged)
+        self.player.errorOccurred.connect(self._media_error)
         self.ui.copyLbl.setText('© LeoMoon Studios')
         #hotkeys
-        self.hotSearch = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+F"), self)
+        self.hotSearch = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+F"), self)
         self.hotSearch.activated.connect(self._hSearch)
-        self.hotZoomIn = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+="), self)
+        self.hotZoomIn = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+="), self)
         self.hotZoomIn.activated.connect(self._plus)
-        self.hotPrint = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+P"), self)
+        self.hotPrint = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+P"), self)
         self.hotPrint.activated.connect(self._preview)
-        self.hotZoomOut = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+-"), self)
+        self.hotZoomOut = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+-"), self)
         self.hotZoomOut.activated.connect(self._minus)
-        self.hotZoomOut = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+0"), self)
+        self.hotZoomOut = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+0"), self)
         self.hotZoomOut.activated.connect(self._vazir)
-        self.hotPlay = QtWidgets.QShortcut(QtGui.QKeySequence("Space"), self)
+        self.hotPlay = QtGui.QShortcut(QtGui.QKeySequence("Space"), self)
         self.hotPlay.activated.connect(self._hPlay)
-        self.hotRandom = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+R"), self)
+        self.hotRandom = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+R"), self)
         self.hotRandom.activated.connect(self._hRandom)
-        self.hotSwitch = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+M"), self)
+        self.hotSwitch = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+M"), self)
         self.hotSwitch.activated.connect(self._theme)
         #ui functions
         self.ui.ghazalRdo.toggled.connect(self._path)
@@ -95,7 +95,7 @@ class mainUi(QtWidgets.QMainWindow):
         self.ui.listLst.setFocus()
         #platform changes
         if sys.platform.startswith('darwin'): #macos
-            self.ui.titleLbl.setFont(QtGui.QFont("Vazir", 29, QtGui.QFont.Black))
+            self.ui.titleLbl.setFont(QtGui.QFont("Vazir", 29, QtGui.QFont.Weight.Black))
             self.ui.verLbl.setFont(QtGui.QFont('Vazir FD', 17))
             self.ui.ghazalRdo.setFont(QtGui.QFont('Vazir FD', 17))
             self.ui.ghasideRdo.setFont(QtGui.QFont('Vazir FD', 17))
@@ -172,25 +172,25 @@ class mainUi(QtWidgets.QMainWindow):
             else:
                 self.ui.playBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/pause.svg', 'lightGray')))
             dark_theme = QtGui.QPalette()
-            dark_theme.setColor(QtGui.QPalette.Window, QtGui.QColor(55,53,53))
-            dark_theme.setColor(QtGui.QPalette.WindowText, QtGui.QColor(227,227,227))
-            dark_theme.setColor(QtGui.QPalette.Base, QtGui.QColor(30,30,30))
-            dark_theme.setColor(QtGui.QPalette.AlternateBase, QtGui.QColor(55,55,55))
-            dark_theme.setColor(QtGui.QPalette.ToolTipBase, QtGui.QColor(50,50,50))
-            dark_theme.setColor(QtGui.QPalette.ToolTipText, QtGui.QColor(227,227,227))
-            dark_theme.setColor(QtGui.QPalette.Text, QtGui.QColor(227,227,227))
-            dark_theme.setColor(QtGui.QPalette.Link, QtGui.QColor(227,227,227))
-            dark_theme.setColor(QtGui.QPalette.Button, QtGui.QColor(50,50,50))
-            dark_theme.setColor(QtGui.QPalette.ButtonText, QtGui.QColor(227,227,227))
-            dark_theme.setColor(QtGui.QPalette.BrightText, QtGui.QColor(227,227,227))
-            dark_theme.setColor(QtGui.QPalette.Highlight, QtGui.QColor(18,131,220))
-            dark_theme.setColor(QtGui.QPalette.HighlightedText, QtCore.Qt.black)
-            dark_theme.setColor(QtGui.QPalette.Active, QtGui.QPalette.Button, QtGui.QColor(53, 53, 53))
-            dark_theme.setColor(QtGui.QPalette.Inactive, QtGui.QPalette.Button, QtGui.QColor(53, 53, 53))
-            dark_theme.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.ButtonText, QtGui.QColor(85,83,83))
-            dark_theme.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.WindowText, QtGui.QColor(85,83,83))
-            dark_theme.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.Text, QtGui.QColor(85,83,83))
-            dark_theme.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.Light, QtGui.QColor(53, 53, 53))
+            dark_theme.setColor(QtGui.QPalette.ColorRole.Window, QtGui.QColor(55,53,53))
+            dark_theme.setColor(QtGui.QPalette.ColorRole.WindowText, QtGui.QColor(227,227,227))
+            dark_theme.setColor(QtGui.QPalette.ColorRole.Base, QtGui.QColor(30,30,30))
+            dark_theme.setColor(QtGui.QPalette.ColorRole.AlternateBase, QtGui.QColor(55,55,55))
+            dark_theme.setColor(QtGui.QPalette.ColorRole.ToolTipBase, QtGui.QColor(50,50,50))
+            dark_theme.setColor(QtGui.QPalette.ColorRole.ToolTipText, QtGui.QColor(227,227,227))
+            dark_theme.setColor(QtGui.QPalette.ColorRole.Text, QtGui.QColor(227,227,227))
+            dark_theme.setColor(QtGui.QPalette.ColorRole.Link, QtGui.QColor(227,227,227))
+            dark_theme.setColor(QtGui.QPalette.ColorRole.Button, QtGui.QColor(50,50,50))
+            dark_theme.setColor(QtGui.QPalette.ColorRole.ButtonText, QtGui.QColor(227,227,227))
+            dark_theme.setColor(QtGui.QPalette.ColorRole.BrightText, QtGui.QColor(227,227,227))
+            dark_theme.setColor(QtGui.QPalette.ColorRole.Highlight, QtGui.QColor(18,131,220))
+            dark_theme.setColor(QtGui.QPalette.ColorRole.HighlightedText, QtCore.Qt.GlobalColor.black)
+            dark_theme.setColor(QtGui.QPalette.ColorGroup.Active, QtGui.QPalette.ColorRole.Button, QtGui.QColor(53, 53, 53))
+            dark_theme.setColor(QtGui.QPalette.ColorGroup.Inactive, QtGui.QPalette.ColorRole.Button, QtGui.QColor(53, 53, 53))
+            dark_theme.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.ButtonText, QtGui.QColor(85,83,83))
+            dark_theme.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.WindowText, QtGui.QColor(85,83,83))
+            dark_theme.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.Text, QtGui.QColor(85,83,83))
+            dark_theme.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.Light, QtGui.QColor(53, 53, 53))
             QtGui.QGuiApplication.setPalette(dark_theme)
             self.setStyleSheet("""
                                     QFrame#banner {background-color: qlineargradient(x1:0 y1:0, x2:0 y2:1, stop:0 #5e5b5b, stop:1 #373535); border-radius: 0px;}
@@ -211,25 +211,25 @@ class mainUi(QtWidgets.QMainWindow):
             else:
                 self.ui.playBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/pause.svg', 'black')))
             light_theme = QtGui.QPalette()
-            light_theme.setColor(QtGui.QPalette.Window, QtGui.QColor(240,240,240))
-            light_theme.setColor(QtGui.QPalette.WindowText, QtGui.QColor(68,68,68))
-            light_theme.setColor(QtGui.QPalette.Base, QtGui.QColor(255,255,255))
-            light_theme.setColor(QtGui.QPalette.AlternateBase, QtGui.QColor(255,255,255))
-            light_theme.setColor(QtGui.QPalette.ToolTipBase, QtGui.QColor(240,240,240))
-            light_theme.setColor(QtGui.QPalette.ToolTipText, QtGui.QColor(68,68,68))
-            light_theme.setColor(QtGui.QPalette.Text, QtGui.QColor(68,68,68))
-            light_theme.setColor(QtGui.QPalette.Link, QtGui.QColor(68,68,68))
-            light_theme.setColor(QtGui.QPalette.Button, QtGui.QColor(240,240,240))
-            light_theme.setColor(QtGui.QPalette.ButtonText, QtGui.QColor(68,68,68))
-            light_theme.setColor(QtGui.QPalette.BrightText, QtGui.QColor(68,68,68))
-            light_theme.setColor(QtGui.QPalette.Highlight, QtGui.QColor(18,131,220))
-            light_theme.setColor(QtGui.QPalette.HighlightedText, QtCore.Qt.white)
-            light_theme.setColor(QtGui.QPalette.Active, QtGui.QPalette.Button, QtGui.QColor(240,240,240))
-            light_theme.setColor(QtGui.QPalette.Inactive, QtGui.QPalette.Button, QtGui.QColor(240,240,240))
-            light_theme.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.ButtonText, QtGui.QColor(118,118,118))
-            light_theme.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.WindowText, QtGui.QColor(118,118,118))
-            light_theme.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.Text, QtGui.QColor(118,118,118))
-            light_theme.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.Light, QtGui.QColor(243,243,243))
+            light_theme.setColor(QtGui.QPalette.ColorRole.Window, QtGui.QColor(240,240,240))
+            light_theme.setColor(QtGui.QPalette.ColorRole.WindowText, QtGui.QColor(68,68,68))
+            light_theme.setColor(QtGui.QPalette.ColorRole.Base, QtGui.QColor(255,255,255))
+            light_theme.setColor(QtGui.QPalette.ColorRole.AlternateBase, QtGui.QColor(255,255,255))
+            light_theme.setColor(QtGui.QPalette.ColorRole.ToolTipBase, QtGui.QColor(240,240,240))
+            light_theme.setColor(QtGui.QPalette.ColorRole.ToolTipText, QtGui.QColor(68,68,68))
+            light_theme.setColor(QtGui.QPalette.ColorRole.Text, QtGui.QColor(68,68,68))
+            light_theme.setColor(QtGui.QPalette.ColorRole.Link, QtGui.QColor(68,68,68))
+            light_theme.setColor(QtGui.QPalette.ColorRole.Button, QtGui.QColor(240,240,240))
+            light_theme.setColor(QtGui.QPalette.ColorRole.ButtonText, QtGui.QColor(68,68,68))
+            light_theme.setColor(QtGui.QPalette.ColorRole.BrightText, QtGui.QColor(68,68,68))
+            light_theme.setColor(QtGui.QPalette.ColorRole.Highlight, QtGui.QColor(18,131,220))
+            light_theme.setColor(QtGui.QPalette.ColorRole.HighlightedText, QtCore.Qt.GlobalColor.white)
+            light_theme.setColor(QtGui.QPalette.ColorGroup.Active, QtGui.QPalette.ColorRole.Button, QtGui.QColor(240,240,240))
+            light_theme.setColor(QtGui.QPalette.ColorGroup.Inactive, QtGui.QPalette.ColorRole.Button, QtGui.QColor(240,240,240))
+            light_theme.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.ButtonText, QtGui.QColor(118,118,118))
+            light_theme.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.WindowText, QtGui.QColor(118,118,118))
+            light_theme.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.Text, QtGui.QColor(118,118,118))
+            light_theme.setColor(QtGui.QPalette.ColorGroup.Disabled, QtGui.QPalette.ColorRole.Light, QtGui.QColor(243,243,243))
             QtGui.QGuiApplication.setPalette(light_theme)
             self.setStyleSheet("""
                                     QFrame#banner {background-color: qlineargradient(x1:0 y1:0, x2:0 y2:1, stop:0 #c9c9c9, stop:1 #F0F0F0); border-radius: 0px;}
@@ -243,7 +243,7 @@ class mainUi(QtWidgets.QMainWindow):
         preview = QtPrintSupport.QPrintPreviewDialog()
         preview.setWindowIcon(QtGui.QIcon(':/res/icons/main.svg'))
         preview.paintRequested.connect(lambda p: self.ui.textEdit.print_(p))
-        preview.exec_()
+        preview.exec()
 
     def _path(self):
         self.ui.listLst.clear()
@@ -306,7 +306,7 @@ class mainUi(QtWidgets.QMainWindow):
         self.ui.ghazalRdo.setChecked(True)
         if self.ui.listLst.count():
             poem_name = self.corpus.random_name('غزل')
-            matches = self.ui.listLst.findItems(poem_name, QtCore.Qt.MatchExactly)
+            matches = self.ui.listLst.findItems(poem_name, QtCore.Qt.MatchFlag.MatchExactly)
             if matches:
                 self.ui.listLst.setCurrentItem(matches[0])
         if self.themeFlg:
@@ -358,8 +358,7 @@ class mainUi(QtWidgets.QMainWindow):
             self.ui.playBtn.show()
             self.ui.slider.show()
             self.audio = QtCore.QUrl.fromLocalFile(str(audio_path))
-            self.content = M.QMediaContent(self.audio)
-            self.player.setMedia(self.content)
+            self.player.setSource(self.audio)
             self.play = False
             self.playback.reset()
             self.player.stop()
@@ -397,6 +396,11 @@ class mainUi(QtWidgets.QMainWindow):
             self.play = True
             self.playback.start()
         self.ui.listLst.setFocus()
+
+    def _media_error(self, error, error_string):
+        self.play = False
+        self.playback.reset()
+        self.ui.slider.setValue(0)
 
     def positionChanged(self, position):
         self.playback.update_position(position)
@@ -457,11 +461,11 @@ def main():
         popup.setMinimumSize(200,423)
         popup.setStandardButtons(QtWidgets.QMessageBox.Ok)
         popup.setDefaultButton(QtWidgets.QMessageBox.Ok)
-        popup.exec_()
+        popup.exec()
         main.close()
     else:
         main.show()
-        sys.exit(app.exec_())
+        sys.exit(app.exec())
 
 if __name__ == "__main__":
     main()
