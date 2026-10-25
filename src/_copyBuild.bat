@@ -35,7 +35,7 @@ SET osBuild=lin
 robocopy .\ ..\build\%osBuild%\ *.py /v
 robocopy ext\ ..\build\%osBuild%\ext\ *.py /v /s
 robocopy gui\ ..\build\%osBuild%\gui\ *.py /v
-::robocopy audio\ ..\build\%osBuild%\audio\ *.wav /v /s
+robocopy audio\ ..\build\%osBuild%\audio\ *.wav /v /s
 robocopy .\ ..\build\%osBuild%\ data.db /v
 ::os specific
 robocopy _setup\deb-package\ ..\build\%osBuild%\dist\deb-package\ /e /v

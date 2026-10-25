@@ -69,6 +69,7 @@ def test_main_window_starts_and_exercises_primary_controls(qtbot, monkeypatch) -
     window._hRandom()
     assert window.ui.listLst.currentItem() is not None
     assert window.ui.listLst.currentItem().text().startswith("غزل")
+    assert window.player.source().isLocalFile()
 
     window.durationChanged(100)
     window.positionChanged(20)

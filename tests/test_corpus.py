@@ -1,34 +1,38 @@
 from __future__ import annotations
 
+from hashlib import sha256
 from pathlib import Path
 from random import Random
+from types import SimpleNamespace
 from zipfile import ZipFile
 
 import pytest
 
+import hafez_corpus
 from hafez_corpus import CATEGORY_COUNTS, CorpusError, PoemArchive
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 FIXTURE_POEMS = PROJECT_ROOT / "tests" / "fixtures" / "poems"
+CANONICAL_CORPUS_DIGEST = "c8fd2f29f1bb190029147699585dfb99220fc541fddeb7f1762c3a52111e882f"
 
 
 def build_fixture_archive(path: Path) -> PoemArchive:
     with ZipFile(path, "w") as archive:
         for poem in sorted(FIXTURE_POEMS.iterdir()):
             archive.write(poem, poem.name)
-    return PoemArchive(path, password=None)
+    return PoemArchive(path)
 
 
-def test_legacy_archive_has_expected_encrypted_category_counts() -> None:
+def test_unencrypted_archive_has_expected_category_counts() -> None:
     archive = PoemArchive(PROJECT_ROOT / "src" / "data.db")
 
-    assert archive.is_encrypted()
+    assert not archive.is_encrypted()
     assert {category: len(archive.names(category)) for category in CATEGORY_COUNTS} == CATEGORY_COUNTS
     assert sum(CATEGORY_COUNTS.values()) == len(archive.names()) == 576
 
 
-def test_legacy_archive_reads_public_domain_poem_text() -> None:
+def test_unencrypted_archive_reads_public_domain_poem_text() -> None:
     archive = PoemArchive(PROJECT_ROOT / "src" / "data.db")
 
     text = archive.read_text("غزل شماره 1")
@@ -37,11 +41,23 @@ def test_legacy_archive_reads_public_domain_poem_text() -> None:
     assert "<br />" in archive.html("غزل شماره 1")
 
 
-def test_legacy_archive_rejects_an_incorrect_password() -> None:
-    archive = PoemArchive(PROJECT_ROOT / "src" / "data.db", password=b"incorrect")
+def test_archive_rejects_encrypted_replacement(tmp_path: Path, monkeypatch) -> None:
+    class EncryptedArchive:
+        def __enter__(self):
+            return self
 
-    with pytest.raises(CorpusError, match="Unable to read"):
-        archive.read_text("غزل شماره 1")
+        def __exit__(self, *args) -> None:
+            return None
+
+        def infolist(self):
+            return [SimpleNamespace(flag_bits=0x1)]
+
+    archive_path = tmp_path / "encrypted.zip"
+    archive_path.touch()
+    monkeypatch.setattr(hafez_corpus, "ZipFile", lambda _: EncryptedArchive())
+
+    with pytest.raises(CorpusError, match="must not be encrypted"):
+        PoemArchive(archive_path).names()
 
 
 def test_fixture_archive_sorts_searches_and_escapes_html(tmp_path: Path) -> None:
@@ -74,7 +90,7 @@ def test_random_name_is_deterministic_with_supplied_random_source(tmp_path: Path
     assert archive.random_name("غزل", Random(1)) == "غزل شماره 2.txt"
 
 
-def test_legacy_random_selection_stays_within_the_495_ghazals() -> None:
+def test_random_selection_stays_within_the_495_ghazals() -> None:
     archive = PoemArchive(PROJECT_ROOT / "src" / "data.db")
     ghazals = archive.names("غزل")
 
@@ -93,3 +109,18 @@ def test_archive_reports_missing_poems_and_archives(tmp_path: Path) -> None:
     invalid_archive.write_text("not a ZIP", encoding="utf-8")
     with pytest.raises(CorpusError, match="invalid"):
         PoemArchive(invalid_archive).names()
+
+
+def test_standard_zip_reader_opens_every_poem_without_a_password() -> None:
+    archive_path = PROJECT_ROOT / "src" / "data.db"
+
+    with ZipFile(archive_path) as archive:
+        assert len(archive.infolist()) == 576
+        assert all(not info.flag_bits & 0x1 for info in archive.infolist())
+        digest = sha256()
+        for name in archive.namelist():
+            digest.update(name.encode("utf-8"))
+            digest.update(b"\0")
+            digest.update(archive.read(name))
+            digest.update(b"\0")
+        assert digest.hexdigest() == CANONICAL_CORPUS_DIGEST

@@ -11,7 +11,6 @@ from zipfile import BadZipFile, ZipFile
 from natsort import natsorted
 
 
-LEGACY_ARCHIVE_PASSWORD = b"z!WbsdCkm#"
 CATEGORY_COUNTS = {
     "غزل": 495,
     "قصیده": 3,
@@ -27,14 +26,12 @@ class CorpusError(RuntimeError):
 
 @dataclass(frozen=True)
 class PoemArchive:
-    """Read Persian poem files from the legacy password-protected ZIP archive."""
+    """Read Persian poem files from the unencrypted bundled ZIP archive."""
 
     path: Path
-    password: bytes | None = LEGACY_ARCHIVE_PASSWORD
 
-    def __init__(self, path: str | Path, password: bytes | None = LEGACY_ARCHIVE_PASSWORD) -> None:
+    def __init__(self, path: str | Path) -> None:
         object.__setattr__(self, "path", Path(path))
-        object.__setattr__(self, "password", password)
 
     @property
     def exists(self) -> bool:
@@ -50,6 +47,7 @@ class PoemArchive:
 
     def names(self, category: str | None = None) -> list[str]:
         with self._open() as archive:
+            self._require_unencrypted(archive)
             names = archive.namelist()
         if category is not None:
             names = [name for name in names if name.startswith(category)]
@@ -61,16 +59,22 @@ class PoemArchive:
 
     def read_text(self, name: str) -> str:
         with self._open() as archive:
+            self._require_unencrypted(archive)
             if name not in archive.namelist():
                 raise CorpusError(f"Poem does not exist in the archive: {name}")
             try:
-                content = archive.read(name, pwd=self.password)
+                content = archive.read(name)
             except (RuntimeError, BadZipFile) as error:
                 raise CorpusError(f"Unable to read poem from the archive: {name}") from error
         try:
             return content.decode("utf-8")
         except UnicodeDecodeError as error:
             raise CorpusError(f"Poem is not UTF-8 text: {name}") from error
+
+    @staticmethod
+    def _require_unencrypted(archive: ZipFile) -> None:
+        if any(info.flag_bits & 0x1 for info in archive.infolist()):
+            raise CorpusError("Poem archive must not be encrypted")
 
     def search(self, query: str) -> list[str]:
         if not query:
