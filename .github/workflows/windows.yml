@@ -49,7 +49,8 @@ jobs:
           $installationPath = (& $vswhere -latest -all -property installationPath).Trim()
           if ([string]::IsNullOrWhiteSpace($installationPath)) { throw "Visual Studio C++ tools were not found" }
           $devCommand = Join-Path $installationPath "Common7\Tools\VsDevCmd.bat"
-          & cmd.exe /s /c "\"\"$devCommand\" -no_logo -arch=${{ matrix.release_arch }} -host_arch=${{ matrix.release_arch }} && set\"" |
+          $commandLine = '"' + $devCommand + '" -no_logo -arch=${{ matrix.release_arch }} -host_arch=${{ matrix.release_arch }} && set'
+          & cmd.exe /s /c $commandLine |
             ForEach-Object {
               $separator = $_.IndexOf("=")
               if ($separator -gt 0) {
