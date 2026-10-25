@@ -6,7 +6,7 @@ from pathlib import Path
 from PySide6 import QtWidgets, QtCore, QtGui, QtPrintSupport
 from PySide6 import QtMultimedia as M
 # import io
-from ext.darkdetect import isDark #darkdetect 0.7.1 [ https://github.com/albertosottile/darkdetect ] 20220718
+from darkdetect import isDark
 #local imports
 from ._generated.main_window import Ui_main
 from .audio import AudioLibrary, PlaybackState

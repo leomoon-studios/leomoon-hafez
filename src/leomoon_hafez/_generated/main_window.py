@@ -343,4 +343,3 @@ class Ui_main(object):
         self.copyLbl.setText(QCoreApplication.translate("main", u"\u00a9 LeoMoon Studios", None))
         self.playBtn.setText("")
     # retranslateUi
-
