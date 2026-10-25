@@ -83,7 +83,7 @@ jobs:
       - name: Package and verify AppImage
         shell: bash
         run: |
-          .venv/bin/python scripts/verify_bundle.py "build/linux-${{ matrix.release_arch }}/release-manifest.json" "${{ inputs.version }}" "${{ matrix.release_arch }}"
+          .venv/bin/python scripts/verify_bundle.py "build/linux-${{ matrix.release_arch }}/release-manifest.json" "${{ inputs.version }}" "${{ matrix.release_arch == 'x86_64' && 'x64' || 'aarch64' }}"
           bash scripts/package-linux.sh --stage-dir "build/linux-${{ matrix.release_arch }}/leomoon-hafez" --dist-dir dist --version "${{ inputs.version }}" --release-date "${{ inputs.release_date }}" --commit "${{ inputs.commit }}" --architecture "${{ matrix.release_arch }}" --appimagetool "$APPIMAGETOOL" --appimagetool-sha256 "$APPIMAGETOOL_SHA256" --runtime-file "$APPIMAGE_RUNTIME" --runtime-sha256 "$APPIMAGE_RUNTIME_SHA256"
           bash scripts/smoke-linux-appimage.sh "dist/leomoon-hafez-${{ inputs.version }}-linux-${{ matrix.release_arch }}.AppImage"
 

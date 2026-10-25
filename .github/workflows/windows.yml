@@ -46,8 +46,7 @@ jobs:
         shell: pwsh
         run: |
           $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
-          $component = "${{ matrix.release_arch == 'arm64' && 'Microsoft.VisualStudio.Component.VC.Tools.ARM64' || 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64' }}"
-          $installationPath = (& $vswhere -latest -products * -requires $component -property installationPath).Trim()
+          $installationPath = (& $vswhere -latest -products * -property installationPath).Trim()
           if ([string]::IsNullOrWhiteSpace($installationPath)) { throw "Visual Studio C++ tools were not found" }
           $devCommand = Join-Path $installationPath "Common7\Tools\VsDevCmd.bat"
           & cmd.exe /s /c "`\"$devCommand`\" -no_logo -arch=${{ matrix.release_arch }} -host_arch=${{ matrix.release_arch }} && set" |
