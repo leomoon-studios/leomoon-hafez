@@ -324,7 +324,7 @@ class mainUi(QtWidgets.QMainWindow):
 
     def _nastaliq(self):
         font = QtGui.QFont()
-        font.setFamily('IranNastaliq-Web')
+        font.setFamily('IranNastaliq')
         font.setPointSize(20)
         self.ui.textEdit.setFont(font)
         self.ui.listLst.setFocus()
@@ -425,7 +425,7 @@ class mainUi(QtWidgets.QMainWindow):
 def main():
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle('Fusion')
-    QtGui.QFontDatabase.addApplicationFont(':/res/fonts/IranNastaliq-Web.ttf') #add custom font no install
+    QtGui.QFontDatabase.addApplicationFont(':/res/fonts/IranNastaliq.ttf') #add custom font no install
     QtGui.QFontDatabase.addApplicationFont(':/res/fonts/Vazir-Black.ttf') #add custom font no install
     QtGui.QFontDatabase.addApplicationFont(':/res/fonts/Vazir-FD.ttf') #add custom font no install
     main = mainUi()
