@@ -1,0 +1,119 @@
+#!/usr/bin/env python3
+"""Create release metadata from one validated semantic-version tag."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+TAG_PATTERN = re.compile(r"^v(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)$")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def git(*arguments: str) -> str:
+    completed = subprocess.run(
+        ["git", *arguments],
+        check=True,
+        cwd=PROJECT_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    return completed.stdout.strip()
+
+
+def parse_tag(tag: str) -> tuple[str, tuple[int, int, int]]:
+    match = TAG_PATTERN.fullmatch(tag)
+    if match is None:
+        raise ValueError("Release tags must match vMAJOR.MINOR.PATCH, for example v2.1.0.")
+    version = tag.removeprefix("v")
+    return version, tuple(int(match.group(name)) for name in ("major", "minor", "patch"))
+
+
+def normalize_date(value: str) -> str:
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    return parsed.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def tag_date(tag: str) -> str:
+    tag_type = git("cat-file", "-t", tag)
+    if tag_type == "tag":
+        date = git("for-each-ref", f"refs/tags/{tag}", "--format=%(taggerdate:iso-strict)")
+    elif tag_type == "commit":
+        date = git("log", "-1", "--format=%cI", f"{tag}^{{commit}}")
+    else:
+        raise ValueError(f"{tag} must resolve to a commit or annotated tag.")
+    if not date:
+        raise ValueError(f"{tag} does not have a usable release date.")
+    return normalize_date(date)
+
+
+def metadata_for(tag: str, *, release_date: str, commit_sha: str) -> dict[str, object]:
+    version, version_parts = parse_tag(tag)
+    windows_version = ".".join(str(part) for part in (*version_parts, 0))
+    return {
+        "tag": tag,
+        "version": version,
+        "release_date": normalize_date(release_date),
+        "commit_sha": commit_sha,
+        "windows_file_version": windows_version,
+        "windows_x64_setup_filename": f"leomoon-hafez-{version}-windows-x64-setup.exe",
+        "windows_arm64_setup_filename": f"leomoon-hafez-{version}-windows-arm64-setup.exe",
+        "linux_x86_64_appimage_filename": f"leomoon-hafez-{version}-linux-x86_64.AppImage",
+        "linux_aarch64_appimage_filename": f"leomoon-hafez-{version}-linux-aarch64.AppImage",
+        "macos_arm64_dmg_filename": f"leomoon-hafez-{version}-macos-arm64.dmg",
+        "release_manifest_filename": f"leomoon-hafez-{version}-manifest.json",
+    }
+
+
+def arguments() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--tag", help="Release tag. Defaults to GITHUB_REF_NAME or the exact HEAD tag.")
+    parser.add_argument("--release-date", help="UTC or offset-aware ISO 8601 release date.")
+    parser.add_argument("--commit-sha", help="Commit SHA. Defaults to the release tag commit.")
+    parser.add_argument("--output", type=Path, help="Write JSON metadata to this file instead of stdout.")
+    parser.add_argument(
+        "--allow-unverified-tag",
+        action="store_true",
+        help="Allow --tag without checking that it is an annotated Git tag. Intended for local template tests only.",
+    )
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = arguments()
+    tag = args.tag or os.environ.get("GITHUB_REF_NAME")
+    if tag is None:
+        tag = git("describe", "--exact-match", "--tags", "HEAD")
+
+    try:
+        parse_tag(tag)
+        if args.allow_unverified_tag:
+            if not args.release_date or not args.commit_sha:
+                raise ValueError("Unverified tag mode requires --release-date and --commit-sha.")
+            release_date = args.release_date
+            commit_sha = args.commit_sha
+        else:
+            release_date = args.release_date or tag_date(tag)
+            commit_sha = args.commit_sha or git("rev-parse", f"{tag}^{{commit}}")
+        metadata = metadata_for(tag, release_date=release_date, commit_sha=commit_sha)
+    except (subprocess.CalledProcessError, ValueError) as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+
+    rendered = json.dumps(metadata, indent=2, sort_keys=True) + "\n"
+    if args.output:
+        args.output.write_text(rendered, encoding="utf-8")
+    else:
+        print(rendered, end="")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

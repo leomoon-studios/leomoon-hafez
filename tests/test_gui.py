@@ -6,6 +6,7 @@ from PySide6 import QtGui
 
 from leomoon_hafez import app as main
 from leomoon_hafez.audio import AudioLibrary
+from leomoon_hafez.version import __version__
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -42,8 +43,8 @@ def test_main_window_starts_and_exercises_primary_controls(qtbot, monkeypatch) -
     qtbot.addWidget(window)
     window.show()
 
-    assert window.windowTitle() == "LeoMoon Hafez 1.0.0"
-    assert window.ui.verLbl.text() == "نسخه 1.0.0"
+    assert window.windowTitle() == f"LeoMoon Hafez {__version__}"
+    assert window.ui.verLbl.text() == f"نسخه {__version__}"
     assert window.ui.listLst.count() == 495
     assert window.ui.playBtn.isVisible()
     assert window.ui.slider.isVisible()

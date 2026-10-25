@@ -13,8 +13,6 @@ from .audio import AudioLibrary, PlaybackState
 from .corpus import CorpusError, PoemArchive
 from .version import __version__
 
-#version: 1.1.6
-
 title = 'دیوان حافظ'
 ASSETS_DIR = Path(__file__).resolve().parent / "assets"
 
