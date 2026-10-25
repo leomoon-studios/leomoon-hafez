@@ -4,14 +4,11 @@ from pathlib import Path
 
 from PySide6 import QtGui
 
-import main
-from hafez_audio import AudioLibrary
+from leomoon_hafez import app as main
+from leomoon_hafez.audio import AudioLibrary
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-SOURCE_ROOT = PROJECT_ROOT / "src"
-
-
 class _Signal:
     def __init__(self) -> None:
         self.callback = None
@@ -38,7 +35,6 @@ class _PreviewDialog:
 
 def test_main_window_starts_and_exercises_primary_controls(qtbot, monkeypatch) -> None:
     monkeypatch.setattr(main, "isDark", lambda: False)
-    monkeypatch.setattr(main.sys, "argv", [str(SOURCE_ROOT / "main.py")])
     QtGui.QFontDatabase.addApplicationFont(":/res/fonts/Vazir-FD.ttf")
     QtGui.QFontDatabase.addApplicationFont(":/res/fonts/IranNastaliq.ttf")
 
@@ -110,7 +106,7 @@ def test_main_window_starts_and_exercises_primary_controls(qtbot, monkeypatch) -
 
 def test_main_window_handles_missing_poem_and_audio_assets(qtbot, monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(main, "isDark", lambda: False)
-    monkeypatch.setattr(main.sys, "argv", [str(tmp_path / "main.py")])
+    monkeypatch.setattr(main, "ASSETS_DIR", tmp_path)
 
     window = main.mainUi()
     qtbot.addWidget(window)

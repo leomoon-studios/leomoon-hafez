@@ -1,0 +1,14 @@
+<RCC>
+  <qresource prefix="res">
+    <file alias="fonts/Vazir-Black.ttf">../assets/fonts/Vazir-Black.ttf</file>
+    <file alias="icons/main.svg">../assets/icons/main.svg</file>
+    <file alias="icons/print.svg">../assets/icons/print.svg</file>
+    <file alias="icons/minus.svg">../assets/icons/minus.svg</file>
+    <file alias="icons/plus.svg">../assets/icons/plus.svg</file>
+    <file alias="icons/search.svg">../assets/icons/search.svg</file>
+    <file alias="icons/play.svg">../assets/icons/play.svg</file>
+    <file alias="icons/pause.svg">../assets/icons/pause.svg</file>
+    <file alias="fonts/IranNastaliq.ttf">../assets/fonts/IranNastaliq.ttf</file>
+    <file alias="fonts/Vazir-FD.ttf">../assets/fonts/Vazir-FD.ttf</file>
+  </qresource>
+</RCC>

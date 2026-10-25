@@ -8,8 +8,8 @@ from zipfile import ZipFile
 
 import pytest
 
-import hafez_corpus
-from hafez_corpus import CATEGORY_COUNTS, CorpusError, PoemArchive
+import leomoon_hafez.corpus as hafez_corpus
+from leomoon_hafez.corpus import CATEGORY_COUNTS, CorpusError, PoemArchive
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -25,7 +25,7 @@ def build_fixture_archive(path: Path) -> PoemArchive:
 
 
 def test_unencrypted_archive_has_expected_category_counts() -> None:
-    archive = PoemArchive(PROJECT_ROOT / "src" / "data.db")
+    archive = PoemArchive(PROJECT_ROOT / "src" / "leomoon_hafez" / "assets" / "data" / "hafez-poems.zip")
 
     assert not archive.is_encrypted()
     assert {category: len(archive.names(category)) for category in CATEGORY_COUNTS} == CATEGORY_COUNTS
@@ -33,7 +33,7 @@ def test_unencrypted_archive_has_expected_category_counts() -> None:
 
 
 def test_unencrypted_archive_reads_public_domain_poem_text() -> None:
-    archive = PoemArchive(PROJECT_ROOT / "src" / "data.db")
+    archive = PoemArchive(PROJECT_ROOT / "src" / "leomoon_hafez" / "assets" / "data" / "hafez-poems.zip")
 
     text = archive.read_text("غزل شماره 1")
 
@@ -91,7 +91,7 @@ def test_random_name_is_deterministic_with_supplied_random_source(tmp_path: Path
 
 
 def test_random_selection_stays_within_the_495_ghazals() -> None:
-    archive = PoemArchive(PROJECT_ROOT / "src" / "data.db")
+    archive = PoemArchive(PROJECT_ROOT / "src" / "leomoon_hafez" / "assets" / "data" / "hafez-poems.zip")
     ghazals = archive.names("غزل")
 
     assert len(ghazals) == 495
@@ -112,7 +112,7 @@ def test_archive_reports_missing_poems_and_archives(tmp_path: Path) -> None:
 
 
 def test_standard_zip_reader_opens_every_poem_without_a_password() -> None:
-    archive_path = PROJECT_ROOT / "src" / "data.db"
+    archive_path = PROJECT_ROOT / "src" / "leomoon_hafez" / "assets" / "data" / "hafez-poems.zip"
 
     with ZipFile(archive_path) as archive:
         assert len(archive.infolist()) == 576

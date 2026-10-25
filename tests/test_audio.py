@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from hafez_audio import AudioLibrary, PlaybackState
-from hafez_corpus import PoemArchive
+from leomoon_hafez.audio import AudioLibrary, PlaybackState
+from leomoon_hafez.corpus import PoemArchive
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -34,8 +34,9 @@ def test_playback_state_tracks_start_pause_position_duration_and_reset() -> None
 
 
 def test_bundled_audio_index_maps_one_to_one_to_ghazals() -> None:
-    library = AudioLibrary(PROJECT_ROOT / "src" / "audio")
-    corpus = PoemArchive(PROJECT_ROOT / "src" / "data.db")
+    assets = PROJECT_ROOT / "src" / "leomoon_hafez" / "assets"
+    library = AudioLibrary(assets / "audio")
+    corpus = PoemArchive(assets / "data" / "hafez-poems.zip")
     recording = library.path_for_poem("غزل شماره 1")
 
     assert library.names() == {name.removesuffix(".txt") for name in corpus.names("غزل")}
