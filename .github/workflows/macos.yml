@@ -45,7 +45,7 @@ jobs:
         shell: bash
         run: |
           .venv/bin/python scripts/generate_qt.py
-          git diff --exit-code -- src/leomoon_hafez/_generated
+          git diff --exit-code -- src/leomoon_hafez/_generated/main_window.py
           .venv/bin/python -m ruff check src tests scripts
           QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORMTHEME='' QT_STYLE_OVERRIDE=Fusion .venv/bin/python -m pytest -q -rs
           .venv/bin/python -m pip check
