@@ -72,11 +72,22 @@ jobs:
         shell: bash
         run: .venv/Scripts/python.exe scripts/build.py --version "${{ inputs.version }}" --release-date "${{ inputs.release_date }}" --commit "${{ inputs.commit }}" --output-dir "build/windows-${{ matrix.release_arch }}" --clean
 
-      - name: Verify manifest and smoke-test bundle
+      - name: Verify Windows PE dependencies
+        shell: pwsh
+        run: scripts/verify-windows-build.ps1 -ApplicationPath "build\windows-${{ matrix.release_arch }}\leomoon-hafez\LeoMoon Hafez.exe" -Architecture "${{ matrix.release_arch }}"
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --yes --no-progress
+
+      - name: Package Windows installer
+        shell: pwsh
+        run: '& scripts/package-windows.ps1 -StageDirectory "build\windows-${{ matrix.release_arch }}\leomoon-hafez" -DistDirectory "dist" -Version "${{ inputs.version }}" -ReleaseDate "${{ inputs.release_date }}" -Commit "${{ inputs.commit }}" -Architecture "${{ matrix.release_arch }}"'
+
+      - name: Verify bundle manifest
         shell: bash
         run: |
           .venv/Scripts/python.exe scripts/verify_bundle.py "build/windows-${{ matrix.release_arch }}/release-manifest.json" "${{ inputs.version }}" "${{ matrix.release_arch }}"
-          QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORMTHEME='' QT_STYLE_OVERRIDE=Fusion .venv/Scripts/python.exe scripts/smoke_bundle.py "build/windows-${{ matrix.release_arch }}/leomoon-hafez/LeoMoon Hafez.exe"
 
       - name: Retain raw bundle diagnostics on failure
         if: failure()
@@ -87,10 +98,33 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-      - name: Upload Windows bundle diagnostics
+      - name: Upload Windows installer artifact
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
-          name: leomoon-hafez-windows-${{ matrix.release_arch }}-build-${{ github.sha }}
-          path: build/windows-${{ matrix.release_arch }}/
+          name: leomoon-hafez-windows-${{ matrix.release_arch }}-release-${{ github.sha }}
+          path: dist/
           if-no-files-found: error
           retention-days: 14
+
+  clean-installer-smoke:
+    name: Clean Windows installer smoke test (${{ matrix.release_arch }})
+    needs: build-and-test
+    runs-on: ${{ matrix.release_arch == 'arm64' && 'windows-11-vs2026-arm' || 'windows-2022' }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        release_arch: ${{ fromJSON(inputs.arch == 'x64' && '["x64"]' || inputs.arch == 'arm64' && '["arm64"]' || '["x64","arm64"]') }}
+    steps:
+      - name: Check out smoke test script
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Download Windows installer artifact
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: leomoon-hafez-windows-${{ matrix.release_arch }}-release-${{ github.sha }}
+          path: dist
+
+      - name: Install, upgrade, and uninstall
+        shell: pwsh
+        run: '& scripts/smoke-windows-installer.ps1 -ArtifactDirectory "$env:GITHUB_WORKSPACE\dist" -Version "${{ inputs.version }}" -Architecture "${{ matrix.release_arch }}"'
