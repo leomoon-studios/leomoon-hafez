@@ -6,15 +6,14 @@ import sys
 dllpath = os.path.dirname(os.path.realpath(sys.argv[0]))
 os.environ["PATH"] += os.pathsep + dllpath
 os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = dllpath
-import random #faal
-from natsort import natsorted #sort numbers properly
 from PyQt5 import QtWidgets, QtCore, QtGui, QtPrintSupport #pyqt stuff
 from PyQt5 import QtMultimedia as M
-import zipfile
 # import io
 from ext.darkdetect import isDark #darkdetect 0.7.1 [ https://github.com/albertosottile/darkdetect ] 20220718
 #local imports
 from gui.guiMain import Ui_main
+from hafez_audio import AudioLibrary, PlaybackState
+from hafez_corpus import CorpusError, PoemArchive
 
 #version: 1.1.6
 
@@ -40,8 +39,12 @@ class mainUi(QtWidgets.QMainWindow):
         self.ui.verLbl.setText('نسخه '+ver)
         self.datapath = os.path.dirname(os.path.realpath(sys.argv[0]))+'/data.db'
         self.audiopath = os.path.dirname(os.path.realpath(sys.argv[0]))+'/audio/'
-        self.data = zipfile.ZipFile(self.datapath, 'r')
-        self.data.setpassword(b'z!WbsdCkm#')
+        self.corpus = PoemArchive(self.datapath)
+        self.audio_library = AudioLibrary(self.audiopath)
+        self.playback = PlaybackState()
+        self.player = M.QMediaPlayer()
+        self.player.positionChanged.connect(self.positionChanged)
+        self.player.durationChanged.connect(self.durationChanged)
         self.ui.copyLbl.setText('© LeoMoon Studios')
         #hotkeys
         self.hotSearch = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+F"), self)
@@ -260,8 +263,8 @@ class mainUi(QtWidgets.QMainWindow):
         else:
             self.ui.playBtn.hide()
             self.ui.slider.hide()
-        if os.path.exists(self.datapath):
-            alist = natsorted([f for f in self.data.namelist() if f.startswith(self.pre)][0:])
+        if self.corpus.exists:
+            alist = self.corpus.names(self.pre)
             self.ui.searchInp.setDisabled(True)
             self.ui.searchBtn.setDisabled(True)
             if not self.themeFlg:
@@ -301,7 +304,11 @@ class mainUi(QtWidgets.QMainWindow):
 
     def _hRandom(self):
         self.ui.ghazalRdo.setChecked(True)
-        self.ui.listLst.setCurrentRow(random.randrange(0,496,1))
+        if self.ui.listLst.count():
+            poem_name = self.corpus.random_name('غزل')
+            matches = self.ui.listLst.findItems(poem_name, QtCore.Qt.MatchExactly)
+            if matches:
+                self.ui.listLst.setCurrentItem(matches[0])
         if self.themeFlg:
             self.ui.playBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/play.svg', 'lightGray')))
         else:
@@ -309,11 +316,9 @@ class mainUi(QtWidgets.QMainWindow):
 
     def _searchList(self):
         self.ui.listLst.clear()
-        slist = natsorted(self.data.namelist())
         if self.ui.searchInp.text() != '':
-            for s in slist:
-                if bytes(self.ui.searchInp.text(), 'utf-8') in self.data.read(s):
-                    self.ui.listLst.addItem(s)
+            for poem_name in self.corpus.search(self.ui.searchInp.text()):
+                self.ui.listLst.addItem(poem_name)
 
     def _vazir(self):
         font = QtGui.QFont()
@@ -344,18 +349,21 @@ class mainUi(QtWidgets.QMainWindow):
         self.ui.listLst.setFocus()
 
     def _listChange(self):
-        self.player = M.QMediaPlayer()
-        if 'غزل' in self.ui.listLst.currentItem().text() and os.path.exists(self.audiopath+self.ui.listLst.currentItem().text()+'.wav'):
+        item = self.ui.listLst.currentItem()
+        if item is None:
+            return
+        poem_name = item.text()
+        audio_path = self.audio_library.path_for_poem(poem_name)
+        if poem_name.startswith('غزل') and audio_path is not None:
             self.ui.playBtn.show()
             self.ui.slider.show()
-            self.audio = QtCore.QUrl.fromLocalFile(self.audiopath+self.ui.listLst.currentItem().text()+'.wav')
+            self.audio = QtCore.QUrl.fromLocalFile(str(audio_path))
             self.content = M.QMediaContent(self.audio)
             self.player.setMedia(self.content)
             self.play = False
+            self.playback.reset()
             self.player.stop()
             self.ui.slider.setValue(0)
-            self.player.positionChanged.connect(self.positionChanged)
-            self.player.durationChanged.connect(self.durationChanged)
             if self.themeFlg:
                 self.ui.playBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/play.svg', 'lightGray')))
             else:
@@ -364,11 +372,12 @@ class mainUi(QtWidgets.QMainWindow):
             self.ui.playBtn.hide()
             self.ui.slider.hide()
             self.play = False
+            self.playback.reset()
             self.player.stop()
-        if self.ui.listLst.currentItem().text() in self.data.namelist():
-            self.ui.textEdit.setHtml('<p style=\"text-align: center;\">'+self.data.read(self.ui.listLst.currentItem().text()).decode("utf-8").replace('\n', '<br \>')+'</p>')
-        # if self.ui.autoCbox.isChecked() and os.path.exists(self.audiopath+self.ui.listLst.currentItem().text()+'.wav'):
-        #     self._play()
+        try:
+            self.ui.textEdit.setHtml('<p style="text-align: center;">' + self.corpus.html(poem_name) + '</p>')
+        except CorpusError:
+            self.ui.textEdit.clear()
 
     def _play(self):
         if self.play:
@@ -378,6 +387,7 @@ class mainUi(QtWidgets.QMainWindow):
             else:
                 self.ui.playBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/play.svg', 'black')))
             self.play = False
+            self.playback.pause()
         else:
             self.player.play()
             if self.themeFlg:
@@ -385,15 +395,19 @@ class mainUi(QtWidgets.QMainWindow):
             else:
                 self.ui.playBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/pause.svg', 'black')))
             self.play = True
+            self.playback.start()
         self.ui.listLst.setFocus()
 
     def positionChanged(self, position):
+        self.playback.update_position(position)
         self.ui.slider.setValue(position)
 
     def durationChanged(self, duration):
+        self.playback.update_duration(duration)
         self.ui.slider.setRange(0, duration)
 
     def _setPosition(self, position):
+        self.playback.update_position(position)
         self.player.setPosition(position)
 
     def _next(self):
@@ -406,8 +420,9 @@ class mainUi(QtWidgets.QMainWindow):
                 self.ui.listLst.setCurrentRow(current)
 
     def _mediaCheck(self): #reset playback when it reaches the end
-        if self.player.duration() == self.ui.slider.value():
+        if self.player.duration() > 0 and self.player.duration() == self.ui.slider.value():
             self.play = False
+            self.playback.reset()
             self.player.stop()
             if self.themeFlg:
                 self.ui.playBtn.setIcon(QtGui.QIcon(self.svgColorChange(':/res/icons/pause.svg', 'lightGray')))
